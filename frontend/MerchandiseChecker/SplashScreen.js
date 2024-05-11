@@ -1,4 +1,3 @@
-//Юра
 import React, { useState, useEffect } from 'react';
 import { Image, View, StyleSheet } from 'react-native';
 
@@ -6,14 +5,15 @@ const SplashScreen = ({ setSplashVisible }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsLoading(false); // Устанавливаем isLoading в false после задержки
-            setSplashVisible(false); // Устанавливаем видимость сплеш-экрана в false
-        }, 3000); // Задержка в 3 секунды
+        // Загружаем асинхронно главный экран приложения
+        const loadMainWindow = async () => {
+          setTimeout(() => {
+            setIsLoading(false); // Задержка перед переходом к главному окну приложения
+          }, 2000);
+        };
 
-        // Очистка таймера при размонтировании компонента
-        return () => clearTimeout(timer);
-    }, [setSplashVisible]);
+        loadMainWindow();
+      }, []);
 
     if (isLoading) {
         return (
@@ -22,6 +22,7 @@ const SplashScreen = ({ setSplashVisible }) => {
             </View>
         );
     } else {
+        setSplashVisible(false); // Устанавливаем видимость сплеш-экрана в false, когда загрузка завершена
         return null;
     }
 };
