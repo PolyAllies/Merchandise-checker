@@ -1,39 +1,52 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
-import { useState } from 'react';
-
-const { width } = Dimensions.get('window');
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 
 export default function StoreWindow() {
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const windowWidth = Dimensions.get('window').width;
 
   const handleSelectItem = (item) => {
-    setSelectedItem(item);
+    let newSelectedItems;
+    if (selectedItems.includes(item)) {
+      newSelectedItems = selectedItems.filter((selectedItem) => selectedItem !== item);
+    } else {
+      newSelectedItems = [...selectedItems, item];
+    }
+    setSelectedItems(newSelectedItems);
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {[...Array(17).keys()].map(item => (
-        <TouchableOpacity key={item} onPress={() => handleSelectItem(item)} style={[styles.item, item === selectedItem ? styles.selectedItem : (item % 2 === 0 ? styles.evenItem : styles.oddItem)]}>
-          <Text style={styles.text}>Item {item + 1}</Text>
+    <ScrollView contentContainerStyle={[styles.container, { paddingTop: 15 }]}>
+      {[...Array(17).keys()].map((item) => (
+        <TouchableOpacity
+          key={item}
+          onPress={() => handleSelectItem(item)}
+          style={[
+            styles.item,
+            { width: windowWidth },
+            item % 2 === 0 ? styles.evenItem : styles.oddItem,
+          ]}
+        >
+          <View style={styles.row}>
+            <Text style={[styles.text, { flex: 1, paddingLeft: 10 }]}>Task {item + 1}</Text>
+            {selectedItems.includes(item) && <View style={styles.checkmark} />}
+          </View>
         </TouchableOpacity>
       ))}
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 30,
-    paddingHorizontal: width * 0.1,
     backgroundColor: 'lightyellow',
-    alignItems: 'center',
   },
   item: {
-    padding: 20,
-    width: Platform.OS === 'ios' ? width * 0.8 : width * 0.9, // Adjust width based on platform
-    marginBottom: 10,
-    left: -25,
+    paddingVertical: 25,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   oddItem: {
     backgroundColor: '#e0e0e0',
@@ -41,13 +54,17 @@ const styles = StyleSheet.create({
   evenItem: {
     backgroundColor: 'lightyellow',
   },
-  selectedItem: {
+  checkmark: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#FDDB3A',
+    marginRight: 10,
   },
   text: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'black',
-    textAlign: 'center'
+    textAlign: 'center',
   },
 });
