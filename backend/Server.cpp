@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string> 
 #include <algorithm>
+#include <cstdlib>
 
 #pragma comment(lib, "Ws2_32.lib") 
 
@@ -50,11 +51,15 @@ template <typename T> typename vector<T>::iterator lookingfor(vector<T> myvector
 
 // Функции хеширования, добавьте сюда ваши функции если они нужны 
 
+
 int main()
 {
+    //system("start C:\\WINDOWS\\system32\\calc.exe");
+    //return 0;
+
     // Инициализация переменных 
     const int port_num = 1234;			// Enter Open working server port // Номер порта 
-    const long buff_size = 1024;    // Maximum size of buffer for exchange info between server and client
+    const long buff_size = 65507;       // Maximum size of buffer for exchange info between server and client
     const int attempts_send = 100;
 
 
@@ -134,16 +139,21 @@ int main()
             //cout << "Client's no. of package2: " << pack << endl;
         }
         unsigned short pack_num = (((unsigned short)(unsigned char)buffer[1]) << 8) | (unsigned short)(unsigned char)buffer[0];
-        cout << "Client's no. of package: " << pack_num << endl; 
-        delete[] buffer;
+        cout << "Client's amount of package: " << pack_num << endl; 
         char** packets = new char* [pack_num]; // скорее всего так будет на сервере
 
         // Вывод принятых данных 
         //cout << "Received data: " << string(buffer, bytesReceived) << endl;
         
-
-
-        //attampts
+        // получение формата фотографии
+        bytesReceived = recvfrom(ServSock, buffer, buff_size, 0, (sockaddr*)&clientAddr, &clientAddrSize);
+        if (bytesReceived == SOCKET_ERROR) {
+            cout << "Error receiving data: " << WSAGetLastError() << endl;
+            delete[] buffer;
+            continue;
+        }
+        string photo_format = string(buffer, bytesReceived);
+        delete[] buffer;
 
 
         // Обработка данных 
@@ -241,13 +251,13 @@ int main()
                 string response = "notOK";
                 sendOk = sendto(ServSock, response.c_str(), response.size(), 0, (sockaddr*)&clientAddr, clientAddrSize);
                 if (sendOk == SOCKET_ERROR) {
-                    cout << "Sending a message about the number of packets failed: " << WSAGetLastError() << endl;
+                    cout << "Sending a message about the status: " << WSAGetLastError() << endl;
                 }
                 Sleep(100);
                 cout << "I'm sending " << rem_pack.size() << " int..." << endl;
                 sendOk = sendto(ServSock, (char*)rem_pack.data(), rem_pack.size() * sizeof(rem_pack[0]), 0, (sockaddr*)&clientAddr, clientAddrSize);
                 if (sendOk == SOCKET_ERROR) {
-                    cout << "Sending a message about the number of packets failed: " << WSAGetLastError() << endl;
+                    cout << "Sending a message of numbers lost packs failed: " << WSAGetLastError() << endl;
                 }
             }
             else {
@@ -257,7 +267,7 @@ int main()
                     cout << "Sending a message about the number of packets failed: " << WSAGetLastError() << endl;
                 }
 
-                string path = "attampts\\" + to_string(client_number) + (string)".jpg";
+                string path = "attampts\\" + to_string(client_number) + photo_format;
                 ofstream testout(path, ios_base::binary);
                 //buffer = new char[buff_size];
                 for (int i = 0; i < pack_num; i++)
@@ -280,6 +290,65 @@ int main()
                 }
                 delete[] packets;
                 //delete[] buffer;
+
+                // запуск нейронки
+
+                // отправка csv файла
+                    // открытие файла и запись в массив чаров
+                ifstream in("road_map.csv");
+                if (!in)
+                {
+                    cout << "File was not opened: road_map.csv";
+                    closesocket(ServSock);
+                    WSACleanup();
+                    return -1;
+                }
+
+                in.seekg(0, std::ios::end);
+                long long size = in.tellg();
+                //if (size > 2147483647 || size - 1 > pow(2, 8 * sizeof(packets_num)) * (BUFF_SIZE - 2)) // заменить pow на побитовый сдвиг /// size-1 т.к. есть закрывающий пакет
+                //{
+                //    cout << "Photo is too large!";
+                //    closesocket(ClientSock);
+                //    WSACleanup();
+                //    _getch();
+                //    return 1;
+                //}
+                in.close();
+
+                in.open("road_map.csv", ios_base::binary);
+                if (!in)
+                {
+                    cout << "File was not opened: road_map.csv";
+                    closesocket(ServSock);
+                    WSACleanup();
+                    //_getch();
+                    return -1;
+                }
+
+                char* bytes = new char[size];
+                in.read(bytes, size);
+                in.close();
+
+                //// отправка размера файла
+                ////string response = "OK";
+                //sendOk = sendto(ServSock, (char*)&size, sizeof(size), 0, (sockaddr*)&clientAddr, clientAddrSize);
+                //if (sendOk == SOCKET_ERROR) {
+                //    cout << "Sending a message about the number of packets failed: " << WSAGetLastError() << endl;
+                //}
+
+                //// биение на пакеты и отправка пакетов
+                //short package_number = 0;
+                //while (package_number * buff_size) {
+
+                //}
+
+                // отправка байтов
+                sendOk = sendto(ServSock, bytes, size, 0, (sockaddr*)&clientAddr, clientAddrSize);
+                if (sendOk == SOCKET_ERROR) {
+                    cout << "Sending the CSV file failed: " << WSAGetLastError() << endl;
+                }
+                
             }
 
             packs.clear(); // впринце больше не нужен

@@ -22,7 +22,7 @@ int main()
     // Инициализация WinSock 
     const char SERVER_IP[] = "192.168.1.49";		    // Enter IPv4 address of Server
     const short PORT_NUM = 1234;				        // Enter Listening port on Server side
-    const short BUFF_SIZE = 1024;					    // Maximum size of buffer for exchange info between server and client // не может быть больше определённого числа
+    const int BUFF_SIZE = 65507;				        // Maximum size of buffer for exchange info between server and client // не может быть больше числа 65507
     //const int sending_attempts = 100;
     const int SEND_ATT = 100;
     string FILE_NAME;
@@ -74,6 +74,7 @@ int main()
     //    return 1;
     //}
 
+    // открытие файла и запись в массив чаров
     ifstream in(FILE_NAME);
 
     if (!in)
@@ -123,6 +124,7 @@ int main()
 	}
 	else
 		wprintf(L"SO_MAX_MSG_SIZE Value: %ld\n", iOptVal);
+    bOptVal = iOptVal;
 
 	iResult = getsockopt(ClientSock, SOL_SOCKET, SO_SNDBUF, (char*)&iOptVal, &iOptLen);
 	if (iResult == SOCKET_ERROR) {
@@ -179,6 +181,19 @@ int main()
         return 1;
     }
 
+    string::iterator dot_pos = std::find(FILE_NAME.begin(), FILE_NAME.end(), '.'); // Split at '.'
+    string photo_format(dot_pos, FILE_NAME.end());
+
+    // Отправка формата фото
+    sendOk = sendto(ClientSock, photo_format.c_str(), photo_format.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
+    if (sendOk == SOCKET_ERROR) {
+        cout << "Sending a message about the number of packets failed: " << WSAGetLastError() << endl;
+        closesocket(ClientSock);
+        WSACleanup();
+        _getch();
+        return 1;
+    }
+
     // Получение ответа 
     char buf[1024];
     int serverSize = sizeof(serverAddr);
@@ -206,7 +221,7 @@ int main()
     {
         cout << "Attampt no." << SEND_ATT - attamp << ": ";
         bool BYTE_END = false;
-        long №byte;
+        long long №byte;
         №pack = -1;
         //cout << "Numbers of packets: " << packets_num << endl;
         while (++№pack < rem_pack.size())           // сборка + отпррвка покетов 
@@ -273,14 +288,14 @@ int main()
 
 
         // получение ответа от сервера 
-        char buf[BUFF_SIZE];         // статус из чаров //либо кол-во непришедших
+        char buf[BUFF_SIZE];         // статуc состоящий из чаров 
         int serverSize = sizeof(serverAddr);
         int bytesReceived = recvfrom(ClientSock, buf, BUFF_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
         if (bytesReceived == SOCKET_ERROR) {
             cout << "Receiving of status failed: " << WSAGetLastError() << endl;
             closesocket(ClientSock);
             WSACleanup();
-            cout << "here?";
+            //cout << "here?";
             _getch();
             return 1;
         }
@@ -303,7 +318,29 @@ int main()
             rem_pack.erase(rem_pack.begin() + (bytesReceived / sizeof(rem_pack[0])), rem_pack.end());   // переназночение размера или уменьшение вектора до принятых значений
             for (auto& i : rem_pack) cout << i << ' '; cout << endl;
         }
-        else rem_pack.clear();
+        else
+        {
+            rem_pack.clear();
+
+            // получение csv файла
+            cout << bOptVal << " - size of max" << endl;
+            char* csvF = new char[bOptVal];
+            int bytesReceived = recvfrom(ClientSock, csvF, bOptVal, 0, (sockaddr*)&serverAddr, &serverSize);
+            if (bytesReceived == SOCKET_ERROR) {
+                cout << "Receiving of remaining packages failed: " << WSAGetLastError() << endl;
+                closesocket(ClientSock);
+                WSACleanup();
+                _getch();
+                return 1;
+            }
+            else cout << bytesReceived << " - size of recived" << endl;
+
+            // запись csv файла
+            ofstream csv("road_map.csv");
+            csv.write(csvF, bytesReceived);
+            csv.close();
+
+        }
 
 
         // повторная отправнка    
