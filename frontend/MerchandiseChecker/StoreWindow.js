@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { useState } from 'react';
+
+const { width } = Dimensions.get('window');
 
 export default function StoreWindow() {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -22,12 +24,16 @@ export default function StoreWindow() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 20,
-    paddingHorizontal: 10,
+    paddingVertical: 30,
+    paddingHorizontal: width * 0.1,
     backgroundColor: 'lightyellow',
+    alignItems: 'center',
   },
   item: {
-    padding: 25,
+    padding: 20,
+    width: Platform.OS === 'ios' ? width * 0.8 : width * 0.9, // Adjust width based on platform
+    marginBottom: 10,
+    left: -25,
   },
   oddItem: {
     backgroundColor: '#e0e0e0',
@@ -42,5 +48,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
+    textAlign: 'center'
   },
 });

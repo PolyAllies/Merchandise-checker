@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Camera } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Camera } from 'expo-camera';
+import * as Permissions from 'expo-permissions';
 
 export default function CameraWindow() {
   const [cameraPermission, setCameraPermission] = useState(null);
 
   useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestPermissionsAsync();
+      const { status } = await Permissions.askAsync(Permissions.CAMERA);
       setCameraPermission(status === 'granted');
     })();
   }, []);
@@ -14,10 +16,12 @@ export default function CameraWindow() {
   return (
     <View style={styles.container}>
       <View style={styles.body}>
-        {cameraPermission ? (
-          <Camera style={styles.camera} />
-        ) : (
+        {cameraPermission === null ? (
+          <Text style={styles.noPermissionText}>Получение разрешения...</Text>
+        ) : cameraPermission === false ? (
           <Text style={styles.noPermissionText}>Доступ к камере не предоставлен</Text>
+        ) : (
+          <Camera style={styles.camera} />
         )}
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Сделать фото</Text>
@@ -37,7 +41,6 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-
   body: {
     flex: 8,
     justifyContent: 'center',
