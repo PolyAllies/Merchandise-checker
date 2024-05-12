@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MerchandiseChecker",
+    "name": "Merchandise checker",
     "slug": "MerchandiseChecker",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,16 +15,23 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aver1ch.MerchandiseChecker"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.aver1ch.MerchandiseChecker"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "875f4bc2-f800-4ef9-88a5-6a469b1ff972"
+      }
     }
   }
 }

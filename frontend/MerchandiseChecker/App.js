@@ -39,8 +39,8 @@ export default function App() {
               <TouchableOpacity style={[styles.navButton, currentPageIndex === 1 && styles.navButtonActive]} onPress={() => handlePageChange('CameraWindow')}>
                 <Image source={require('./assets/camera.png')} style={styles.navImage} />
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.navButton, currentPageIndex === 2 && styles.navButtonActive]} onPress={() => handlePageChange('SettingsWindow')}>
-                <Image source={require('./assets/settings.png')} style={styles.navImage} />
+              <TouchableOpacity style={[styles.accountButton, currentPageIndex === 2 && styles.navButtonActive]} onPress={() => handlePageChange('SettingsWindow')}>
+                <Image source={require('./assets/man.png')} style={styles.accountImage} />
               </TouchableOpacity>
             </View>
           </View>
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'stretch',
     backgroundColor: 'white',
-    height: 90,
+    height: 80,
   },
   navButtonContainer: {
     flexDirection: 'row',
@@ -74,8 +74,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#41444B',
   },
   navButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 40,
+    paddingVertical: 10,
+    paddingHorizontal: 50
   },
   navButtonActive: {
     backgroundColor: '#FDDB3A',
@@ -84,4 +84,13 @@ const styles = StyleSheet.create({
     width: 65,
     height: 60,
   },
+  accountImage: {
+    width: 40,
+    height: 50,
+    alignItems: "center"
+  },
+  accountButton: {
+    paddingVertical: 15,
+    paddingHorizontal: 50
+  }
 });
