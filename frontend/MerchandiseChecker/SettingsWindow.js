@@ -1,66 +1,30 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import UserAccountWindow from './UserAccountWindow.js';
 
 export default function SettingsWindow() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [userData, setUserData] = useState(null);
-
-  const handleLogin = async () => {
-    // Логика проверки введенных пользователем данных и входа в аккаунт
-    try {
-      // Ваша логика проверки логина и пароля
-      // ...
-
-      // После успешного входа получаем данные пользователя с сервера
-      const response = await fetch('http://your-server.com/userdata');
-      const userData = await response.json();
-      setUserData(userData);
-
-      // После успешного входа устанавливаем флаг входа в true
-      setIsLoggedIn(true);
-    } catch (error) {
-      console.error('Ошибка входа:', error);
-    }
-  };
+  const [showUserAccount, setShowUserAccount] = useState(false);
 
   const handleLogout = () => {
-    // Логика выхода из аккаунта
     setIsLoggedIn(false);
-    setUsername('');
-    setPassword('');
     setUserData(null);
+    setShowUserAccount(false);
+  };
+
+  const handleMyAccount = () => {
+    setIsLoggedIn(true);
+    setShowUserAccount(true);
+    setUserData({ name: 'John', surname: 'Doe', email: 'john.doe@example.com' });
   };
 
   return (
     <View style={styles.container}>
-      {isLoggedIn ? (
-        <>
-          <View style={styles.header}>
-            <Text style={styles.title}>Добро пожаловать, {userData.name}!</Text>
-          </View>
-          <View style={styles.body}>
-            <View style={styles.item}>
-              <Text style={styles.itemLabel}>Имя:</Text>
-              <Text style={styles.itemValue}>{userData.name}</Text>
-            </View>
-            <View style={styles.item}>
-              <Text style={styles.itemLabel}>Фамилия:</Text>
-              <Text style={styles.itemValue}>{userData.surname}</Text>
-            </View>
-            <View style={styles.item}>
-              <Text style={styles.itemLabel}>Email:</Text>
-              <Text style={styles.itemValue}>{userData.email}</Text>
-            </View>
-            {/* Добавьте другие поля для отображения данных пользователя */}
-            <TouchableOpacity style={styles.button} onPress={handleLogout}>
-              <Text style={styles.buttonText}>Выйти из аккаунта</Text>
-            </TouchableOpacity>
-          </View>
-        </>
+      {showUserAccount ? (
+        <UserAccountWindow userData={userData} onLogout={handleLogout} />
       ) : (
-        <>
+        <View style={styles.loginContainer}>
           <View style={styles.header}>
             <Text style={styles.title}>Вход</Text>
           </View>
@@ -68,21 +32,22 @@ export default function SettingsWindow() {
             <TextInput
               style={styles.input}
               placeholder="Логин"
-              onChangeText={setUsername}
-              value={username}
+              onChangeText={() => {}}
             />
             <TextInput
               style={styles.input}
               placeholder="Пароль"
-              onChangeText={setPassword}
-              value={password}
+              onChangeText={() => {}}
               secureTextEntry={true}
             />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <TouchableOpacity style={styles.button} onPress={() => setIsLoggedIn(true)}>
               <Text style={styles.buttonText}>Войти</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.myAccountButton} onPress={handleMyAccount}>
+              <Text style={styles.myAccountButtonText}>Мой аккаунт</Text>
+            </TouchableOpacity>
           </View>
-        </>
+        </View>
       )}
     </View>
   );
@@ -94,6 +59,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F4E6',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loginContainer: {
+    alignItems: 'center',
+    width: '80%',
   },
   header: {
     marginBottom: 20,
@@ -107,28 +76,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 450
   },
-  item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 5,
-    marginBottom: 20,
-  },
-  itemLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'black',
-  },
-  itemValue: {
-    fontSize: 18,
-    color: 'black',
-  },
   input: {
     fontSize: 18,
-    width: '80%',
+    width: '100%',
     height: 50,
     padding: 10,
     borderWidth: 1,
@@ -137,13 +87,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    width: '80%',
+    width: '100%',
     paddingVertical: 15,
     backgroundColor: '#FDDB3A',
     borderRadius: 40,
     alignItems: 'center',
+    marginBottom: 10,
   },
   buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  myAccountButton: {
+    width: '100%',
+    paddingVertical: 15,
+    backgroundColor: '#C0C0C0',
+    borderRadius: 40,
+    alignItems: 'center',
+  },
+  myAccountButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
