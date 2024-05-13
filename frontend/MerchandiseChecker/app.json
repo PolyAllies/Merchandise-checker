@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "Merchandise checker",
+    "permissions": ["camera", "mediaLibrary"],
     "slug": "MerchandiseChecker",
     "version": "1.0.0",
     "orientation": "portrait",
