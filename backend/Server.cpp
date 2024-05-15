@@ -56,7 +56,42 @@ template <typename T> typename vector<T>::iterator lookingfor(vector<T> myvector
 int main()
 {
     //system("start C:\\WINDOWS\\system32\\calc.exe");
-    //return 0;
+
+    //ifstream in("road_map.csv");
+    //if (!in)
+    //{
+    //    cout << "File was not opened: road_map.csv";
+    //    //closesocket(ServSock);
+    //    //WSACleanup();
+    //    return -1;
+    //}
+
+    //in.seekg(0, std::ios::end);
+    //long long size = in.tellg();
+    //in.close();
+
+    //in.open("road_map.csv", ios_base::binary);
+    //if (!in)
+    //{
+    //    cout << "File was not opened: road_map.csv";
+    //    //closesocket(ServSock);
+    //    //WSACleanup();
+    //    //_getch();
+    //    return -1;
+    //}
+
+    //char* bytes = new char[size + 3];
+    ////string scv = "CSV";
+    ////bytes = &scv[0];
+    //bytes[0] = 'C';
+    //bytes[1] = 'S';
+    //bytes[2] = 'V';
+    //in.read(bytes + 3, size);
+    //in.close();
+
+    //cout << bytes << endl;
+
+    //return 10;
 
     // Инициализация переменных 
     const int port_num = 1234;			// Enter Open working server port // Номер порта 
@@ -347,8 +382,10 @@ int main()
                     return -1;
                 }
 
-                char* bytes = new char[size];
-                in.read(bytes, size);
+                char* bytes = new char[size + 3];
+                bytes[0] = 'C'; bytes[1] = 'S'; bytes[2] = 'V';
+
+                in.read(bytes + 3, size);
                 in.close();
 
                 //// отправка размера файла
@@ -365,7 +402,7 @@ int main()
                 //}
 
                 // отправка байтов
-                sendOk = sendto(ServSock, bytes, size, 0, (sockaddr*)&clientAddr, clientAddrSize);
+                sendOk = sendto(ServSock, bytes, size + 3, 0, (sockaddr*)&clientAddr, clientAddrSize);
                 if (sendOk == SOCKET_ERROR) {
                     cout << "Sending the CSV file failed: " << WSAGetLastError() << endl;
                 }
