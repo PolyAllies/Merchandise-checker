@@ -7,6 +7,7 @@
 #include <string> 
 #include <algorithm>
 #include <cstdlib>
+#include <sstream>
 
 #pragma comment(lib, "Ws2_32.lib") 
 
@@ -62,6 +63,7 @@ int main()
     const long buff_size = 65507;       // Maximum size of buffer for exchange info between server and client
     const int attempts_send = 100;
 
+    //cout << sizeof(int) << endl;
 
     WSADATA wsData;
     int erStat = WSAStartup(MAKEWORD(2, 2), &wsData);
@@ -138,8 +140,9 @@ int main()
             //pack = *buffer;
             //cout << "Client's no. of package2: " << pack << endl;
         }
-        unsigned short pack_num = (((unsigned short)(unsigned char)buffer[1]) << 8) | (unsigned short)(unsigned char)buffer[0];
-        cout << "Client's amount of package: " << pack_num << endl; 
+        unsigned short pack_num2 = (((unsigned short)(unsigned char)buffer[1]) << 8) | (unsigned short)(unsigned char)buffer[0];
+        unsigned short pack_num = (((unsigned short)(unsigned char)buffer[0]) << 8) | (unsigned short)(unsigned char)buffer[1];
+        cout << "Client's amount of package: " << pack_num << " or " << pack_num2 << endl;
         char** packets = new char* [pack_num]; // скорее всего так будет на сервере
 
         // Вывод принятых данных 
@@ -182,7 +185,7 @@ int main()
             //cout << "rem_pack.size(): " << rem_pack.size() << endl;
             vector <int> packs;
             int last_pack_size;
-            unsigned short №pack = 0, lst_pack = 0; // ноль только для unsigned
+            unsigned short №pack = 0, №pack2 = 0, lst_pack = 0; // ноль только для unsigned
             lst_pack--;
             while (№pack != lst_pack)
             {
@@ -193,8 +196,9 @@ int main()
                     //delete[] buffer;
                     //continue;
                 }
-                №pack = (((unsigned short)(unsigned char)buffer[1]) << 8) | (unsigned short)(unsigned char)buffer[0];
-                cout << "Client's no. of package: " << №pack << endl;
+                №pack2 = (((unsigned short)(unsigned char)buffer[1]) << 8) | (unsigned short)(unsigned char)buffer[0];
+                №pack = (((unsigned short)(unsigned char)buffer[0]) << 8) | (unsigned short)(unsigned char)buffer[1];
+                cout << "Client's no. of package: " << №pack << " or " << №pack2 << endl;
                 if (№pack != lst_pack) {
                     packets[№pack] = buffer;
                     packs.push_back(№pack);
@@ -253,9 +257,26 @@ int main()
                 if (sendOk == SOCKET_ERROR) {
                     cout << "Sending a message about the status: " << WSAGetLastError() << endl;
                 }
+                //response = "10";
+                //sendOk = sendto(ServSock, response.c_str(), response.size(), 0, (sockaddr*)&clientAddr, clientAddrSize);
+                //if (sendOk == SOCKET_ERROR) {
+                //    cout << "Sending a message about the status: " << WSAGetLastError() << endl;
+                //}
                 Sleep(100);
                 cout << "I'm sending " << rem_pack.size() << " int..." << endl;
-                sendOk = sendto(ServSock, (char*)rem_pack.data(), rem_pack.size() * sizeof(rem_pack[0]), 0, (sockaddr*)&clientAddr, clientAddrSize);
+                //sendOk = sendto(ServSock, (char*)rem_pack.data(), rem_pack.size() * sizeof(rem_pack[0]), 0, (sockaddr*)&clientAddr, clientAddrSize);
+                //if (sendOk == SOCKET_ERROR) {
+                //    cout << "Sending a message of numbers lost packs failed: " << WSAGetLastError() << endl;
+                //}
+                std::stringstream ss;
+                for (size_t i = 0; i < rem_pack.size(); ++i)
+                {
+                    if (i != 0)
+                        ss << ",";
+                    ss << rem_pack[i];
+                }
+                std::string s = ss.str();
+                sendOk = sendto(ServSock, s.c_str(), s.size(), 0, (sockaddr*)&clientAddr, clientAddrSize);
                 if (sendOk == SOCKET_ERROR) {
                     cout << "Sending a message of numbers lost packs failed: " << WSAGetLastError() << endl;
                 }
