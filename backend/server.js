@@ -1,45 +1,66 @@
 const express = require('express');
-const fs = require('fs');
 const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
-const PORT = 1234;
+const PORT = 8000;
 
-// Позволяет парсить тело запроса в формате JSON
 app.use(bodyParser.json());
+app.use(fileUpload());
 
-// Обработчик POST запроса для сохранения фотографии
-// Обработчик POST запроса для сохранения фотографии
 app.post('/photo', (req, res) => {
-    // Получаем данные из тела запроса
-    const { packetsNum, photoFormat } = req.body;
-    const photoData = req.files.photo.data;
-  
-    console.log(`Received photo data with ${packetsNum} packets and format ${photoFormat}`);
-  
-    // Строим путь и имя файла для сохранения
-    const fileName = `received_photo.${photoFormat}`;
-  
-    // Пишем данные в файл
-    fs.appendFile(fileName, photoData, (err) => {
-      if (err) {
-        console.error(`Error saving photo: ${err}`);
-        res.status(500).send('Error saving photo');
-      } else {
-        console.log(`Received photo saved as ${fileName}`);
-  
-        // Если это последний пакет, завершаем запись и отправляем ответ
-        if (packetsNum === '0') {
-          // Выполните здесь обработку фото и создание CSV файла (если необходимо)
-  
-          // Отправляем ответ клиенту
-          res.status(200).send('Photo received successfully');
-        }
+  const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+  if (!req.files || Object.keys(req.files).length === 0) {
+    return res.status(400).send('No files were uploaded.');
+  }
+
+  const photoFile = req.files.photo;
+  const uploadPath = `./uploads/${photoFile.name}`;
+  const processedPhotoPath = path.resolve(__dirname, './uploads/processed_photo.jpg');
+
+  photoFile.mv(uploadPath, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+
+    console.log(`File uploaded from IP: ${clientIP}`);
+
+    const pythonScript = spawn('python', [
+      '/Users/averichie/Desktop/Career/Merchandise-checker/backend/Bochkari_telegram_bot/main.py',
+      uploadPath,
+      processedPhotoPath
+    ]);
+
+    pythonScript.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+
+    pythonScript.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    pythonScript.on('close', (code) => {
+      console.log(`Python script exited with code ${code}`);
+
+      if (code !== 0) {
+        return res.status(500).send('Error occurred during image processing');
       }
+
+      res.json({
+        message: 'Photo processed successfully',
+        processedPhotoUrl: `http://${req.headers.host}/uploads/processed_photo.jpg`
+      });
     });
   });
+});
 
-// Старт сервера
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function CameraWindow() {
   const [cameraPermission, setCameraPermission] = useState(null);
@@ -18,46 +19,93 @@ export default function CameraWindow() {
     })();
   }, []);
 
-const takePicture = async () => {
-  if (camera) {
-    let photo;
-    try {
-      photo = await camera.takePictureAsync();
-    } catch (error) {
-      console.error('Error taking picture:', error);
+  const takePicture = async () => {
+    if (camera) {
+      let photo;
+      try {
+        photo = await camera.takePictureAsync();
+      } catch (error) {
+        console.error('Error taking picture:', error);
+      }
+      if (photo && photo.uri) {
+        sendPhoto(photo);
+      } else {
+        console.error('Failed to take picture or URI is null:', photo);
+      }
     }
-    if (photo && photo.uri) {
-      sendPhoto(photo.uri);
-    } else {
-      console.error('Failed to take picture or URI is null:', photo);
-    }
-  }
-};
+  };
 
-  const sendPhoto = async (filePath) => {
+  const sendPhoto = async (photo) => {
     try {
-      const photo = await MediaLibrary.getAssetInfoAsync(filePath);
       const formData = new FormData();
-      formData.append('packetsNum', '1'); // Одна отправка
-      formData.append('photoFormat', 'jpeg'); // Формат изображения
+      formData.append('packetsNum', '1');
+      formData.append('photoFormat', 'jpeg');
       formData.append('photo', {
         uri: photo.uri,
         type: 'image/jpeg',
         name: 'photo.jpg',
       });
 
-      const response = await fetch('http://192.168.1.136:1234/photo', {
+      const response = await fetch('http://192.168.50.85:8000/photo', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
+
+      const result = await response.json();
 
       if (response.ok) {
         console.log('Photo sent successfully');
+        Alert.alert('Success', 'Photo processed and saved to gallery');
+        if (Platform.OS === 'android') {
+          Linking.openURL(result.processedPhotoUrl);
+        } else {
+          MediaLibrary.saveToLibraryAsync(result.processedPhotoUrl);
+        }
       } else {
         console.error('Failed to send photo');
+        Alert.alert('Error', 'Failed to process photo');
       }
     } catch (error) {
       console.error('Error sending photo:', error);
+      Alert.alert('Error', 'Error sending photo');
+    }
+  };
+
+  const pickImageFromGallery = async () => {
+    if (mediaLibraryPermission) {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        sendPhoto(result.assets[0]);
+      } else {
+        console.log('Image selection canceled');
+      }
+    } else {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status === 'granted') {
+        let result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+        });
+
+        if (!result.canceled) {
+          sendPhoto(result.assets[0]);
+        } else {
+          console.log('Image selection canceled');
+        }
+      } else {
+        console.log('Access to media library denied');
+      }
     }
   };
 
@@ -77,6 +125,9 @@ const takePicture = async () => {
         )}
         <TouchableOpacity style={styles.button} onPress={takePicture}>
           <Text style={styles.buttonText}>Сделать фото</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.galleryButton} onPress={pickImageFromGallery}>
+          <Text style={styles.buttonText}>Галерея</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -110,11 +161,21 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingVertical: 25,
-    paddingHorizontal: 80,
+    paddingHorizontal: 50,
     position: 'absolute',
     bottom: 15,
+    left: 0,
     backgroundColor: '#FDDB3A',
     borderRadius: 40,
+  },
+  galleryButton: {
+    paddingVertical: 25,
+    paddingHorizontal: 60,
+    position: 'absolute',
+    bottom: 15,
+    backgroundColor: '#4287f5',
+    borderRadius: 40,
+    left: 250,
   },
   buttonText: {
     fontSize: 20,
